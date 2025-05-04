@@ -1,17 +1,20 @@
-# CosmosDiagnosticsExtractor README
+# CosmosDiagnosticsExtractor
 
-A tool designed to extract and format Cosmos DB diagnostics from log files.
+A Visual Studio Code extension designed to streamline the extraction and formatting of Cosmos DB diagnostics from log files.
+
+## Overview
+
+Cosmos DB SDK diagnostics are essential for troubleshooting connectivity and service availability issues. However, these diagnostics are often embedded within unstructured logs, making it challenging to locate and interpret critical details. Additionally, diagnostics strings may be quoted or escaped, further complicating their readability.
+
+CosmosDiagnosticsExtractor addresses these challenges by extracting valid diagnostics strings in JSON format, unescaping or unquoting them as needed, and presenting them in a clean, readable structure.
 
 ## Features
 
-Cosmos DB SDK diagnostics play a crucial role in investigating connectivity or service availability issues. However, diagnostics information is often buried within unstructured logs, making it difficult to identify and interpret key details. Additionally, diagnostics strings may be quoted or escaped, further complicating readability.
+- **Log Parsing**: Extracts Cosmos DB diagnostics strings from JSON, CSV, or plain text log files.
+- **Simplified Output**: Removes unnecessary quoting or escaping to enhance clarity.
+- **Readable Formatting**: Converts diagnostics into a well-structured JSON format for easier analysis.
 
-This extension simplifies the process by extracting all valid diagnostics strings in JSON format, unquoting or unescaping them when necessary, and presenting them in a prettified, easy-to-read format.
+## Limitations
 
-### Key Benefits:
-- Extracts Cosmos DB diagnostics strings from JSON, CSV, or plain text log files.
-- Formats diagnostics into a readable JSON structure.
-- Removes unnecessary quoting or escaping for better clarity.
+This extension provides a best-effort approach to extract and format diagnostics information. However, it may not include all original error messages. For complete context, always refer to the original log file.
 
-### Important Notes:
-While this extension makes a best-effort attempt to extract and format key diagnostics information, the original error messages may not always be included in the output. For complete context, always refer to the original log file.

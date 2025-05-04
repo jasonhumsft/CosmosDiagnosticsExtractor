@@ -2,6 +2,8 @@
   "name": "cosmosdiagnosticsextractor",
   "displayName": "Cosmos Diagnostics Extractor",
   "description": "Tool to extract Cosmos DB diagnostics from log file",
+  "publisher": "jasonhumsft",
+  "repository": "https://github.com/jasonhumsft/CosmosDiagnosticsExtractor",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.99.0"
