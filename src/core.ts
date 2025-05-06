@@ -25,8 +25,14 @@ function unescapeJsonInString(jsonString: string): string {
     return jsonString.replace(/\\\"/g, '"').replace(/\\\\/g, '\\');
 }
 
-const keyword = 'Diagnostics';
-const keywordLength = keyword.length;
+// The keyword to search for in the log string
+// This is the string that indicates the start of the log section we want to extract
+const keywordToSearch = 'Diagnostics';
+const keywordLength = keywordToSearch.length;
+
+// The keyword that must be present in the log section to be considered valid
+// This is the string that indicates the log section is related to Cosmos Diagnostics
+const keywordMustBePresent = 'Agent';
 
 /**
  * Finds the start and end of the log section in the given string.
@@ -54,7 +60,7 @@ function findLogStartAndEnd(log: string): [number | null, number | null] {
     // If we don't find a matching pair of '{' and '}', we return [null, null].
     // If we don't find the keyword 'Diagnostics', we return [null, null].
 
-    const keywordIndex = log.indexOf(keyword);
+    const keywordIndex = log.indexOf(keywordToSearch);
     if (keywordIndex !== -1) {
         const idx = log.substring(keywordIndex + keywordLength).indexOf('{');
         if (idx !== -1) {
@@ -111,31 +117,35 @@ export function extractCosmosDiagnostics() {
                 logSection = unescapeJsonInString(logSection);
             }
             let jsonObject;
-            try {
-                jsonObject = JSON.parse(logSection);
-                console.log('Deserialized JSON object:', jsonObject);
-                result.push(jsonObject);
-            } catch (error) {
-                console.error('Failed to deserialize JSON:', error);
-                console.debug('Raw log:', logSection);
-                if (error instanceof SyntaxError && !tryEscape) {
-                    // If JSON parsing fails, try to escape the string and parse again
-                    tryEscape = true;
-                    console.debug('Retry by escaping JSON string...');
-                    continue;
-                }
-                const errorMessage = error instanceof Error ? error.message : String(error);
 
-                console.debug(`Failed to deserialize JSON. Error: ${errorMessage}`);
+            // Check if the log section contains 'Agent' to determine if it's a valid Cosmos Diagnostics log
+            if (logSection.includes(keywordMustBePresent)) {
+                try {
+                    jsonObject = JSON.parse(logSection);
+                    console.log('Deserialized JSON object:', jsonObject);
+                    result.push(jsonObject);
+                } catch (error) {
+                    console.error('Failed to deserialize JSON:', error);
+                    console.debug('Raw log:', logSection);
+                    if (error instanceof SyntaxError && !tryEscape) {
+                        // If JSON parsing fails, try to escape the string and parse again
+                        tryEscape = true;
+                        console.debug('Retry by escaping JSON string...');
+                        continue;
+                    }
+                    const errorMessage = error instanceof Error ? error.message : String(error);
 
-                // skip this log section
-                if (start + keywordLength < text.length) {
-                    console.debug(`Skipping to next log section...`);
-                    text = text.substring(start + keywordLength);
-                    [start, end] = findLogStartAndEnd(text);
-                    continue;
-                } else {
-                    break;
+                    console.debug(`Failed to deserialize JSON. Error: ${errorMessage}`);
+
+                    // skip this log section
+                    if (start + keywordLength < text.length) {
+                        console.debug(`Skipping to next log section...`);
+                        text = text.substring(start + keywordLength);
+                        [start, end] = findLogStartAndEnd(text);
+                        continue;
+                    } else {
+                        break;
+                    }
                 }
             }
             if (end + 1 < text.length) {
