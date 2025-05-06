@@ -25,6 +25,9 @@ function unescapeJsonInString(jsonString: string): string {
     return jsonString.replace(/\\\"/g, '"').replace(/\\\\/g, '\\');
 }
 
+const keyword = 'Diagnostics';
+const keywordLength = keyword.length;
+
 /**
  * Finds the start and end of the log section in the given string.
  * Start is the first '{' after the string 'Diagnostics', and end is the first matching '}'.
@@ -39,8 +42,6 @@ function findLogStartAndEnd(log: string): [number | null, number | null] {
     const stack: number[] = [];
     const logLength = log.length;
 
-    const keyword = 'Diagnostics';
-    const keywordLength = keyword.length;
 
     // Find the first occurrence of the keyword 'Diagnostics' in the log string
     // and then find the first '{' after it.
@@ -106,8 +107,9 @@ export function extractCosmosDiagnostics() {
         let tryEscape = false;
         while (start !== null && end !== null) {
             let logSection = text.substring(start, end + 1);
-            if (tryEscape)
+            if (tryEscape) {
                 logSection = unescapeJsonInString(logSection);
+            }
             let jsonObject;
             try {
                 jsonObject = JSON.parse(logSection);
@@ -120,18 +122,28 @@ export function extractCosmosDiagnostics() {
                     // If JSON parsing fails, try to escape the string and parse again
                     tryEscape = true;
                     console.debug('Retry by escaping JSON string...');
-                    continue
+                    continue;
                 }
                 const errorMessage = error instanceof Error ? error.message : String(error);
 
-                vscode.window.showErrorMessage(`Failed to deserialize JSON. Error: ${errorMessage}`);
-                break;
+                console.debug(`Failed to deserialize JSON. Error: ${errorMessage}`);
+
+                // skip this log section
+                if (start + keywordLength < text.length) {
+                    console.debug(`Skipping to next log section...`);
+                    text = text.substring(start + keywordLength);
+                    [start, end] = findLogStartAndEnd(text);
+                    continue;
+                } else {
+                    break;
+                }
             }
             if (end + 1 < text.length) {
                 text = text.substring(end + 1);
                 [start, end] = findLogStartAndEnd(text);
-            } else
+            } else {
                 break;
+            }
         }
         if (result.length > 0) {
             const jsonString = JSON.stringify(result, null, 2);
