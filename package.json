@@ -1,10 +1,10 @@
 {
-  "name": "cosmosdiagnosticsextractor",
-  "displayName": "Cosmos Diagnostics Extractor",
-  "description": "Tool to extract Cosmos DB diagnostics from log file",
+  "name": "cosmosdiagnosticsformatter",
+  "displayName": "Cosmos Diagnostics Formatter",
+  "description": "Tool to extract Cosmos DB diagnostics from log file and format it for better readability.",
   "publisher": "jasonhumsft",
-  "repository": "https://github.com/jasonhumsft/CosmosDiagnosticsExtractor",
-  "version": "0.0.1",
+  "repository": "https://github.com/jasonhumsft/cosmosdiagnosticsformatter",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -16,8 +16,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "cosmosdiagnosticsextractor.extractCosmosDiagnostics",
-        "title": "Extract Cosmos Diagnostics"
+        "command": "cosmosdiagnosticsformatter.extractCosmosDiagnostics",
+        "title": "Cosmos Diagnostics: Extract and Format"
+      },
+      {
+        "command": "cosmosdiagnosticsformatter.extractInCompleteCosmosDiagnostics",
+        "title": "Cosmos Diagnostics: Extract, Fix and Format"
       }
     ]
   },

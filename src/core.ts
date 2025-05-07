@@ -90,6 +90,97 @@ function findLogStartAndEnd(log: string): [number | null, number | null] {
     return [start, end];
 }
 
+function findAndFixJsonString(log: string): [string | null, boolean] {
+    let start: number | null = null;
+    let end: number | null = null;
+    let result: string | null = null;
+    let fixed = false;
+    const stack: string[] = [];
+
+    const logLength = log.length;
+    if (log.includes(keywordMustBePresent)) {
+        const idx = log.indexOf('{');
+        if (idx !== -1) {
+            start = idx;
+            stack.push('{');
+            for (let i = start + 1; i < logLength; i++) {
+                const char = log[i];
+                if (char === '{' || char === '[') {
+                    stack.push(char);
+                } else if (char === '}' || char === ']') {
+                    const last = stack.pop();
+                    if (last === '{' && char === '}') {
+                        // Matching pair found, do nothing
+                    } else if (last === '[' && char === ']') {
+                        // Matching pair found, do nothing
+                    } else {
+                        // Mismatched pair, handle accordingly
+                        console.error('Mismatched braces or brackets in JSON string.');
+                        return [null, false]; // Return the original log if mismatched
+                    }
+                }
+                else if (char === '"' || char === "'") {
+                    if (stack.length > 0 && stack[stack.length - 1] === char) {
+                        stack.pop(); // Closing quote found, pop from stack
+                    } else {
+                        stack.push(char); // Opening quote found, push to stack
+                    }
+                }
+                if (stack.length === 0) {
+                    end = i;
+                    break;
+                }
+            }
+            if (end !== null) {
+                result = log.substring(start, end + 1);
+            }
+            if (end === null && stack.length > 0) {
+                result = log.substring(start); // Return the remaining string if not found
+                while (stack.length > 0) {
+                    const char = stack.pop();
+                    if (char === '{') {
+                        result += '}'; // Add closing brace for '{'
+                    } else if (char === '[') {
+                        result += ']'; // Add closing bracket for '['
+                    }
+                    else if (char === '"') {
+                        result += '"'; // Add closing quote for '"'
+                    } else if (char === "'") {
+                        result += "'"; // Add closing quote for "'"
+                    }
+                }
+                fixed = true; // Mark as fixed
+            }
+
+            // console.debug(`Extracted JSON string: ${result}`);
+            // Validate if the result is a valid JSON string
+            if (result) {
+                try {
+                    JSON.parse(result);
+                    // console.debug('Validated JSON string successfully.');
+                } catch (error) {
+                    // console.error('Validation failed. Invalid JSON string:', result);
+                    if (result.endsWith('}') && result.includes(',')) {
+                        const lastCommaIndex = result.lastIndexOf(',');
+                        const firstBracketIndex = result.indexOf('}', lastCommaIndex);
+                        if (lastCommaIndex !== -1 && firstBracketIndex > lastCommaIndex) {
+                            const potentialKeyValuePair = result.substring(lastCommaIndex + 1, firstBracketIndex).trim();
+                            if (!/^\s*"[^"]*"\s*:\s*.+$/.test(potentialKeyValuePair)) {
+                                result = result.substring(0, lastCommaIndex) + result.substring(firstBracketIndex);
+                                fixed = true; // Mark as fixed since we removed an invalid key-value pair
+                            }
+                        }
+                    }
+                }
+            }
+
+
+
+        }
+    }
+    return [result, fixed];
+}
+
 export function extractCosmosDiagnostics() {
     const editor = vscode.window.activeTextEditor;
     if (editor) {
@@ -166,5 +257,51 @@ export function extractCosmosDiagnostics() {
 
     } else {
         vscode.window.showErrorMessage('Please open a log file to extract Cosmos Diagnostics.');
+    }
+}
+
+export function extractInCompleteCosmosDiagnostics() {
+    const editor = vscode.window.activeTextEditor;
+    if (editor) {
+        const document = editor.document;
+        const fileName = document.fileName;
+        console.debug(`Current file name: ${fileName}`);
+        const fileExtension = fileName.split('.').pop();
+        console.debug(`File extension: ${fileExtension}`);
+
+        const result: any[] = [];
+        let resultFixed = false;
+        for (let i = 0; i < document.lineCount; i++) {
+            let line = document.lineAt(i).text;
+            if (fileExtension === 'csv') {
+                // console.debug('CSV file detected. Unquoting CSV string...');
+                line = unquoteCsvString(line);
+            }
+            const [jsonString, fixed] = findAndFixJsonString(line);
+            if (jsonString) {
+                if (fixed) {
+                    resultFixed = true;
+                }
+                try {
+                    const jsonObject = JSON.parse(jsonString);
+                    // console.log('Deserialized JSON object:', jsonObject);
+                    result.push(jsonObject);
+                } catch (error) {
+                    console.error('Failed to deserialize JSON:', error);
+                    console.debug('Raw json string:', jsonString);
+                }
+            }
+        }
+        if (result.length > 0) {
+            const jsonString = JSON.stringify(result, null, 2);
+            vscode.workspace.openTextDocument({ content: jsonString, language: 'json' }).then((doc) => {
+                vscode.window.showTextDocument(doc, { preview: false });
+                if (resultFixed) {
+                    vscode.window.showInformationMessage('Incomplete Cosmos Diagnostics found and fixed. Please note some information might be missing.');
+                }
+            });
+        } else {
+            vscode.window.showErrorMessage('No Cosmos Diagnostics found in the log file.');
+        }
     }
 }
