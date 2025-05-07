@@ -6,7 +6,7 @@ A Visual Studio Code extension designed to streamline the extraction and formatt
 
 Cosmos DB SDK diagnostics are essential for troubleshooting connectivity and service availability issues. However, these diagnostics are often embedded within unstructured logs, making it challenging to locate and interpret critical details. Additionally, diagnostics strings may be quoted or escaped, further complicating their readability.
 
-CosmosDiagnosticsExtractor addresses these challenges by extracting valid diagnostics strings in JSON format, unescaping or unquoting them as needed, and presenting them in a clean, readable structure.
+Cosmos Diagnostics Formatter addresses these challenges by extracting valid diagnostics strings in JSON format, unescaping or unquoting them as needed, and presenting them in a clean, readable structure.
 
 ## Features
 
