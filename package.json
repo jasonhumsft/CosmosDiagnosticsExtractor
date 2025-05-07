@@ -2,6 +2,7 @@
   "name": "cosmosdiagnosticsformatter",
   "displayName": "Cosmos Diagnostics Formatter",
   "description": "Tool to extract Cosmos DB diagnostics from log file and format it for better readability.",
+  "icon": "assets/images/icon.png",
   "publisher": "jasonhumsft",
   "repository": "https://github.com/jasonhumsft/cosmosdiagnosticsformatter",
   "version": "0.0.2",
